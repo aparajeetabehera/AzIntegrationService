@@ -4,7 +4,7 @@
 2. [ Create Azure Service Bus using azure portal  ](#aServiceBus)
 3. [ Create Azure Service Bus Queue using azure portal](#aServiceBusQueue)
 4. [ Create Azure Function App using azure portal  ](#aFunctionApp)
-5. [ Implement Service Bus Trigger Function ](#aFunctionTrigger)
+5. [ Implement Service Bus Trigger Azure Function ](#aFunctionTrigger)
 6. [ Send messages to Queue ](#aSendMessage)
 
 
@@ -13,7 +13,8 @@
  
 Let’s assume XYZ is a client and its app acts as a source, asynchronously sending messages to service bus queue. An azure function which is bound to trigger on every message received at the queue, process it and saves the data to the CRM System and acts as target. The message data can be of any kind of information including structured data encoded with the common formats such as JSON, XML, Plain Text.
 
-![image](https://user-images.githubusercontent.com/3272780/142759594-0a4e0d8e-e0cd-49b9-b13a-bb912d7e8a09.png)
+![image](https://user-images.githubusercontent.com/3272780/142763934-92a679d9-3b91-4828-8d53-d925f658d742.png)
+
 
 <a name="aServiceBus"></a>
 ##	2. Create Azure Service Bus using azure portal
@@ -64,7 +65,7 @@ Let’s assume XYZ is a client and its app acts as a source, asynchronously send
 ![image](https://user-images.githubusercontent.com/3272780/142761342-bfddb1ff-9d29-4426-aa13-c4bce4c16cb1.png)
 
 <a name="aFunctionTrigger"></a>
-##	5. Implement Service Bus Trigger Function
+##	5. Implement Service Bus Trigger Azure Function
 
 1. Create your New Azure Function Project
 
@@ -77,21 +78,43 @@ Let’s assume XYZ is a client and its app acts as a source, asynchronously send
 
 3. Update your Azure function code  
 
-![image](https://user-images.githubusercontent.com/3272780/140976235-81360242-3c5f-4305-b3dc-78321dbfcbd8.png)
+       [FunctionName("PatientDetailsFunction")]
+        public static void Run([ServiceBusTrigger("%QueueName%", Connection = "ServiceBusConnectionString")] string message, ILogger log)
+        {
+            log.LogInformation("PatientDetails Function started.", log);
+
+            try
+            {  
+                // process the message
+                ProcessMessage(message);
+            }
+            catch (Exception ex)
+            {
+                log.LogInformation("Error occurred: " + ex.Message);
+            }
+        }
 
 4. Update your settings.json 
-
-![image](https://user-images.githubusercontent.com/3272780/140976831-4fe2487d-522e-4b6c-ac8c-9052a84903aa.png)
+ 
+       {
+       "IsEncrypted": false,
+       "Values": {
+       "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+       "ServiceBusConnectionString": "<Enter the azure Service Bus endpoint>",
+       "QueueName": "<Enter your Queue Name>",
+       "TimeInterval": <CRON EXPRESSION>,
+       "AzureWebJobsStorage": "<Enter the azure storage account endpoint>"
+       }
+       }      
+     
 
 5. Run, Debug code
-
-![image](https://user-images.githubusercontent.com/3272780/140976255-737df29e-0dad-4ca6-a94b-2797676665af.png)
 
 <a name="aSendMessage"></a>
 ##	6. Send messages to Queue
 
 1. [Azure Service Bus client library for .NET](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Messaging.ServiceBus_7.5.0/sdk/servicebus/Azure.Messaging.ServiceBus/README.md#send-and-receive-a-message)
-2. Alternative option for sending message, We can use Service Bus Explorer tool. This tool allows you to connect with Azure Service Bus and administer messaging entities much quickly and easily. [Download](https://aka.ms/servicebusexplorer)
+2. Alternative option for sending message, Service Bus Explorer tool. This tool allow you to connect with Azure Service Bus and administer messaging entities much quickly and easily. [Download](https://aka.ms/servicebusexplorer)
 
 Open Service Bus Explorer, Go to File and Connect. Manually enter your azure service bus connectionstring under the box, and start sending messages to your choose queue under the entities.
 
